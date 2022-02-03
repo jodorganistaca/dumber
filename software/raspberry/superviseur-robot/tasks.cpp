@@ -26,6 +26,7 @@
 #define PRIORITY_TRECEIVEFROMMON 25
 #define PRIORITY_TSTARTROBOT 20
 #define PRIORITY_TCAMERA 21
+#define PRIORITY_TCHKBATT 10
 
 /*
  * Some remarks:
@@ -123,7 +124,7 @@ void Tasks::Init() {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_create(&th_checkBattery, "th_checkBattery", 0, PRIORITY_TMOVE, 0)) {
+    if (err = rt_task_create(&th_checkBattery, "th_checkBattery", 0, PRIORITY_TCHKBATT, 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -392,9 +393,7 @@ void Tasks::MoveTask(void *arg) {
 }
 
 void Tasks::CheckBattery(void *arg) {
-    int rs;
-    int cpMove;
-    
+    Message * msgSend;
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
@@ -405,18 +404,15 @@ void Tasks::CheckBattery(void *arg) {
     rt_task_set_periodic(NULL, TM_NOW, 500000000);
 
     while (1) {
-        rt_task_wait_period(NULL);
-        cout << "Battery";
-        Message * msgSend;
-        rt_mutex_acquire(&mutex_robot, TM_INFINITE);
-        msgSend = robot.Write(robot.GetBattery());
-        rt_mutex_release(&mutex_robot);
-        cout << msgSend->GetID();
-        cout << ")" << endl;
 
-        cout << "Movement answer: " << msgSend->ToString() << endl << flush;
-        WriteInQueue(&q_messageToMon, msgSend);  // msgSend will be deleted by sendToMon
+        rt_task_wait_period(NULL);
+        cout << "Battery level : ";  
+        rt_mutex_acquire(&mutex_robot, TM_INFINITE);
+        msgSend = robot.Write(new Message(MESSAGE_ROBOT_BATTERY_GET));
+        rt_mutex_release(&mutex_robot);
+        cout << (string)msgSend->GetID();
         cout << endl << flush;
+        
     }
 }
 
