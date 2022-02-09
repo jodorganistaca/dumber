@@ -4,7 +4,7 @@
   <confs>
     <conf name="Debug__PC_" type="1">
       <toolsSet>
-        <developmentServer>localhost</developmentServer>
+        <developmentServer>pi@10.105.1.13:22</developmentServer>
         <platform>2</platform>
       </toolsSet>
       <dbx_gdbdebugger version="1">

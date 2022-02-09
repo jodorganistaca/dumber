@@ -392,8 +392,12 @@ void Tasks::MoveTask(void *arg) {
     }
 }
 
+/**
+ * @brief Thread handling battery check.
+ */
 void Tasks::CheckBattery(void *arg) {
     Message * msgSend;
+    int rs ;
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
     rt_sem_p(&sem_barrier, TM_INFINITE);
@@ -406,16 +410,19 @@ void Tasks::CheckBattery(void *arg) {
     while (1) {
 
         rt_task_wait_period(NULL);
-        cout << "Battery level : ";  
-        rt_mutex_acquire(&mutex_robot, TM_INFINITE);
-        msgSend = robot.Write(new Message(MESSAGE_ROBOT_BATTERY_GET));
-        rt_mutex_release(&mutex_robot);
-        cout << (string)msgSend->GetID();
-        cout << endl << flush;
+        
+        rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
+        rs = robotStarted;
+        rt_mutex_release(&mutex_robotStarted);
+        if (rs == 1) {            
+            rt_mutex_acquire(&mutex_robot, TM_INFINITE);
+            msgSend = robot.Write(ComRobot::GetBattery());
+            rt_mutex_release(&mutex_robot);
+            cout << endl << msgSend->ToString() << flush ;
+        }
         
     }
 }
-
 /**
  * Write a message in a given queue
  * @param queue Queue identifier
