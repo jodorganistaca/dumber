@@ -386,7 +386,7 @@ void Tasks::StartRobotTaskWithWD(void *arg) {
         rt_sem_p(&sem_startRobotWD, TM_INFINITE);
         cout << "Start robot with watchdog (";
         rt_mutex_acquire(&mutex_robot, TM_INFINITE);
-        msgSend = robot.Write(robot.StartWithoutWD());
+        msgSend = robot.Write(robot.StartWithWD());
         rt_mutex_release(&mutex_robot);
         cout << msgSend->GetID();
         cout << ")" << endl;
@@ -398,11 +398,72 @@ void Tasks::StartRobotTaskWithWD(void *arg) {
             rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
             robotStarted = 1;
             rt_mutex_release(&mutex_robotStarted);
-            rt_sem_v(&sem_watchdog);
+            rt_sem_v(&sem_watchdog);//Lancement du Reload WD
         }
     }
 }
+/**
+ * @brief Thread handling battery check.
+ */
+void Tasks::Watchdog(void *arg) {
+    Message * msgSend;
+    int rs ;
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier, TM_INFINITE);
+    
+    /**************************************************************************************/
+    /* The task starts here                                                               */
+    /**************************************************************************************/
+    rt_task_set_periodic(NULL, TM_NOW, 50000000);
 
+    while (1) {
+
+        rt_task_wait_period(NULL);
+        
+        rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
+        rs = robotStarted;
+        rt_mutex_release(&mutex_robotStarted);
+        if (rs == 1) {            
+            rt_mutex_acquire(&mutex_robot, TM_INFINITE);
+            msgSend = robot.Write(ComRobot::ReloadWD()); //Function 11
+            rt_mutex_release(&mutex_robot);
+            cout << endl << msgSend->ToString() << flush ;
+        }
+        int counter;
+        if(msg->CompareID(MESSAGE_ANSWER_NACK)  // function 8
+                || msg->CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT)
+                || msg->CompareID(MESSAGE_ANSWER_ROBOT_UNKNOWN_COMMAND) 
+                || msg->CompareID(MESSAGE_ANSWER_ROBOT_ERROR)){
+            rt_mutex_acquire(&mutex_countError, TM_INFINITE);
+            counter = countError++;
+            rt_mutex_release(&mutex_countError);
+            if (counter > 3) { 
+                rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
+                robotStarted = 0;// function 9
+                rt_mutex_release(&mutex_robotStarted);
+                rt_mutex_acquire(&mutex_robot, TM_INFINITE);
+                robot.Close(); //function 
+                rt_mutex_release(&mutex_robot);
+                //ComMonitor.Write(MESSAGE_ROBOT_COM_CLOSE);//rt_sem_v(&sem_stopRobot);
+                cout << "Robot communication is lost";
+                //robot.Write(ComRobot::Close());
+                //Reinit counter
+                rt_mutex_acquire(&mutex_countError, TM_INFINITE);
+                countError= 0;
+                rt_mutex_release(&mutex_countError);
+                counter=0;
+            }
+        }else {
+            rt_mutex_acquire(&mutex_countError, TM_INFINITE);
+            countError= 0;
+            rt_mutex_release(&mutex_countError);
+            counter=0;
+        }
+        
+    }
+}
+/*
 void Tasks::Watchdog(void *arg) {
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)
@@ -428,7 +489,7 @@ void Tasks::Watchdog(void *arg) {
         }
     }
 }
-
+*/
 /**
  * @brief Thread handling control of the robot.
  */
@@ -472,7 +533,19 @@ void Tasks::MoveTask(void *arg) {
                 counter = countError++;
                 rt_mutex_release(&mutex_countError);
                 if (counter > 3) {
-                    rt_sem_v(&sem_stopRobot);
+                    rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
+                    robotStarted = 0;
+                    rt_mutex_release(&mutex_robotStarted);
+                    rt_mutex_acquire(&mutex_robot, TM_INFINITE);
+                    robot.Close();
+                    rt_mutex_release(&mutex_robot);
+                    //ComMonitor.Write(MESSAGE_ROBOT_COM_CLOSE);//rt_sem_v(&sem_stopRobot);
+                    cout << "Robot communication is lost";
+                    //robot.Write(ComRobot::Close());
+                     rt_mutex_acquire(&mutex_countError, TM_INFINITE);
+                    countError= 0;
+                    rt_mutex_release(&mutex_countError);
+                    counter=0;
                 }
             }else {
                 countError = 0;
@@ -509,6 +582,33 @@ void Tasks::CheckBattery(void *arg) {
             msgSend = robot.Write(ComRobot::GetBattery());
             rt_mutex_release(&mutex_robot);
             cout << endl << msgSend->ToString() << flush ;
+        }
+        int counter;
+        if(msg->CompareID(MESSAGE_ANSWER_NACK) 
+                || msg->CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT)
+                || msg->CompareID(MESSAGE_ANSWER_ROBOT_UNKNOWN_COMMAND) 
+                || msg->CompareID(MESSAGE_ANSWER_ROBOT_ERROR)){
+            rt_mutex_acquire(&mutex_countError, TM_INFINITE);
+            counter = countError++;
+            rt_mutex_release(&mutex_countError);
+            if (counter > 3) {
+                rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
+                robotStarted = 0;
+                rt_mutex_release(&mutex_robotStarted);
+                rt_mutex_acquire(&mutex_robot, TM_INFINITE);
+                robot.Close();
+                rt_mutex_release(&mutex_robot);
+                
+                //ComMonitor.Write(MESSAGE_ROBOT_COM_CLOSE);//rt_sem_v(&sem_stopRobot);
+                cout << "Robot communication is lost";
+                //robot.Write(ComRobot::Close());
+                rt_mutex_acquire(&mutex_countError, TM_INFINITE);
+                countError= 0;
+                rt_mutex_release(&mutex_countError);
+                counter=0;
+            }
+        }else {
+            countError = 0;
         }
         
     }
