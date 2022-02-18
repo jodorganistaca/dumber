@@ -81,6 +81,7 @@ private:
     RT_TASK th_move;
     RT_TASK th_checkBattery;
     RT_TASK th_watchdog;
+    RT_TASK th_stopRobot;
     
     /**********************************************************************/
     /* Mutex                                                              */
@@ -152,10 +153,14 @@ private:
     void MoveTask(void *arg);
     
     /**
-     * @brief Thread handling control of the robot.
+     * @brief Thread handling the batery of the robot.
      */
     void CheckBattery(void *arg);
     
+    /**
+     * @brief Thread stoping the communication with the robot.
+     */
+    void StopRobot(void *arg);
     /**********************************************************************/
     /* Queue services                                                     */
     /**********************************************************************/
