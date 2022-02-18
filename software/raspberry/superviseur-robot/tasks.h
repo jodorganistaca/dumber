@@ -80,6 +80,7 @@ private:
     RT_TASK th_startRobotWithWD;
     RT_TASK th_move;
     RT_TASK th_checkBattery;
+    RT_TASK th_watchdog;
     
     /**********************************************************************/
     /* Mutex                                                              */
