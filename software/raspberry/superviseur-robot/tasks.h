@@ -66,7 +66,6 @@ private:
     ComRobot robot;
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
-    int countWD = 0;
     int countError = 0;
     
     /**********************************************************************/
@@ -90,7 +89,6 @@ private:
     RT_MUTEX mutex_robot;
     RT_MUTEX mutex_robotStarted;
     RT_MUTEX mutex_move;
-    RT_MUTEX mutex_counterWD;
     RT_MUTEX mutex_countError;
     /**********************************************************************/
     /* Semaphores                                                         */
@@ -156,6 +154,11 @@ private:
      * @brief Thread handling the batery of the robot.
      */
     void CheckBattery(void *arg);
+
+    /**
+     * @brief Task to handling counter check.
+     */
+    void CheckCounter(Message *msgSend);
     
     /**
      * @brief Thread stoping the communication with the robot.

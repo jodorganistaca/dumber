@@ -310,7 +310,6 @@ void Tasks::ReceiveFromMonTask(void *arg) {
         if (msgRcv->CompareID(MESSAGE_MONITOR_LOST)) {
             cout << "Lost connection with monitor" << endl << flush;
             rt_sem_v(&sem_stopRobot);
-            delete(msgRcv);
             exit(-1);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_COM_OPEN)) {
             rt_sem_v(&sem_openComRobot);
@@ -330,6 +329,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
         }
         delete(msgRcv); // mus be deleted manually, no consumer
     }
+    cout << "Stop ReceiveFromMonTask" << endl << flush;
 }
 
 /**
