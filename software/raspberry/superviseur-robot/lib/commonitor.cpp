@@ -330,7 +330,7 @@ Message *ComMonitor::StringToMessage(string &s) {
     } else if (tokenCmd.find(LABEL_MONITOR_MESSAGE) != string::npos) {
         msg = new MessageString(MESSAGE_LOG, tokenData);
     } else if (tokenCmd.find(LABEL_MONITOR_ROBOT_COM_CLOSE) != string::npos) {
-        msg = new Message(MESSAGE_ROBOT_COM_CLOSE);
+        msg = new Message(MESSAGE_ROBOT_COM_CLOSE); /* Fonction 9*/
     } else if (tokenCmd.find(LABEL_MONITOR_ROBOT_COM_OPEN) != string::npos) {
         msg = new Message(MESSAGE_ROBOT_COM_OPEN);
     } else if (tokenCmd.find(LABEL_MONITOR_ROBOT_GET_BATTERY) != string::npos) {
