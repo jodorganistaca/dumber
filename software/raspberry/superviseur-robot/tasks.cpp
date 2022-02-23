@@ -555,10 +555,11 @@ void Tasks::CheckCounter(Message *msgSend) {
         rt_mutex_acquire(&mutex_countError, TM_INFINITE);
         counter = countError++;
         rt_mutex_release(&mutex_countError);
+        cout << "counter: " << counter << endl << flush;
         if (counter >= 3) {
             //ComMonitor.Write(MESSAGE_ROBOT_COM_CLOSE);//
             rt_sem_v(&sem_stopRobot);
-            cout << "Robot communication is lost";
+            cout << "Robot communication is lost" << endl << flush;
         }
     }else {
         rt_mutex_acquire(&mutex_countError, TM_INFINITE);
