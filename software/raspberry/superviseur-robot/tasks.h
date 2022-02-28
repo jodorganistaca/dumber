@@ -66,7 +66,6 @@ private:
     ComRobot robot;
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
-    int countWD = 0;
     int countError = 0;
     
     /**********************************************************************/
@@ -76,7 +75,7 @@ private:
     RT_TASK th_sendToMon;
     RT_TASK th_receiveFromMon;
     RT_TASK th_openComRobot;
-    RT_TASK th_startRobot;
+    RT_TASK th_startRobotWithoutWD;
     RT_TASK th_startRobotWithWD;
     RT_TASK th_move;
     RT_TASK th_checkBattery;
@@ -90,7 +89,6 @@ private:
     RT_MUTEX mutex_robot;
     RT_MUTEX mutex_robotStarted;
     RT_MUTEX mutex_move;
-    RT_MUTEX mutex_counterWD;
     RT_MUTEX mutex_countError;
     /**********************************************************************/
     /* Semaphores                                                         */
@@ -98,10 +96,11 @@ private:
     RT_SEM sem_barrier;
     RT_SEM sem_openComRobot;
     RT_SEM sem_serverOk;
-    RT_SEM sem_startRobot;
-    RT_SEM sem_startRobotWD;
+    RT_SEM sem_startRobotWithoutWD;
+    RT_SEM sem_startRobotWithWD;
     RT_SEM sem_watchdog;
     RT_SEM sem_stopRobot;
+    RT_SEM sem_stopMonitor;
 
     /**********************************************************************/
     /* Message queues                                                     */
@@ -135,7 +134,7 @@ private:
     /**
      * @brief Thread starting the communication with the robot.
      */
-    void StartRobotTask(void *arg);
+    void StartRobotTaskWithoutWD(void *arg);
     
     /**
      * @brief Thread starting the communication with the robot with watchdog.
@@ -156,6 +155,11 @@ private:
      * @brief Thread handling the batery of the robot.
      */
     void CheckBattery(void *arg);
+
+    /**
+     * @brief Task to handling counter check.
+     */
+    void CheckCounter(Message *msgSend);
     
     /**
      * @brief Thread stoping the communication with the robot.
