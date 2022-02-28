@@ -100,6 +100,7 @@ private:
     RT_SEM sem_startRobotWithWD;
     RT_SEM sem_watchdog;
     RT_SEM sem_stopRobot;
+    RT_SEM sem_stopMonitor;
 
     /**********************************************************************/
     /* Message queues                                                     */
